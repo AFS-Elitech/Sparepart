@@ -1,5 +1,5 @@
 // Naikkan VERSION setiap kali file shell (index/style/app) diubah
-const VERSION = 'sparepart-v3';
+const VERSION = 'sparepart-v4';
 const SHELL_CACHE = VERSION + '-shell';
 const FONT_CACHE = VERSION + '-fonts';
 
