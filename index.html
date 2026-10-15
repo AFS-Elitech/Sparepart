@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>StockxHarga Sparepart</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#1f1f1f">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/Sparepart%20192%20light.png">
+  <link rel="apple-touch-icon" href="assets/Sparepart%20192%20light.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Sparepart">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@500;600;700&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="page">
+
+  <div class="landing" id="landing">
+    <div class="landing-title" id="landingTitle">
+      <h1>Cari<span>•</span>Cocok<span>•</span>Cuan</h1>
+      <p>Cari aja dulu, siapa tau jodoh</p>
+    </div>
+
+    <div class="icon-stage">
+      <div class="tooltip-bubble" id="tooltipBubble">
+        <h4>Tips</h4>
+        <ul>
+          <li>Klik icon ini dan mulai mencari</li>
+          <li>Klik foto untuk melihat lebih jelas</li>
+          <li>Selalu lakukan double check!</li>
+        </ul>
+      </div>
+
+      <div class="search-shell" id="heroShell">
+        <input type="text" class="search-input" id="heroInput" placeholder="Ketik nama produk, part, atau kode..." autocomplete="off">
+        <button class="search-icon-btn" id="heroIconBtn" aria-label="Cari">
+          <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"></circle><line x1="20" y1="20" x2="15.4" y2="15.4"></line></svg>
+        </button>
+        <div class="suggest-box" id="heroSuggest"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats" id="statsWrap">
+    <div class="stats-pill">Ditemukan <b id="statsCount">0</b> hasil</div>
+  </div>
+
+  <div class="card reveal" id="cardWrap">
+    <table>
+      <thead>
+        <tr><th>Foto</th><th>Produk</th><th>Kode</th><th>Part</th><th>Stok</th><th>Harga</th><th>Aksi</th></tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <footer class="site-footer reveal" id="siteFooter">StockxHarga Sparepart — Layanan Purna Jual</footer>
+</div>
+
+<div class="float-search" id="floatSearch">
+  <div class="float-hint" id="floatHint"></div>
+  <div class="float-suggest" id="floatSuggest"></div>
+  <div class="float-shell" id="floatShell">
+    <input type="text" class="float-input" id="floatInput" placeholder="Cari lagi..." autocomplete="off">
+    <button class="float-icon-btn" id="floatIconBtn" aria-label="Cari">
+      <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"></circle><line x1="20" y1="20" x2="15.4" y2="15.4"></line></svg>
+    </button>
+  </div>
+</div>
+
+<div class="img-overlay" id="imgOverlay">
+  <button class="img-overlay-close" id="imgOverlayClose">✕</button>
+  <div class="img-overlay-content">
+    <img id="imgOverlayImg" src="" alt="preview">
+  </div>
+  <div class="img-overlay-controls">
+    <div class="img-overlay-group">
+      <button class="ov-btn ov-flip" id="ovFlipH" title="Cerminkan horizontal">↔</button>
+      <button class="ov-btn ov-flip" id="ovFlipV" title="Cerminkan vertikal">↕</button>
+    </div>
+    <div class="ov-divider"></div>
+    <div class="img-overlay-group">
+      <button class="ov-btn" id="ovRotateLeft">↺</button>
+      <button class="ov-btn" id="ovRotateRight">↻</button>
+    </div>
+    <div class="ov-divider"></div>
+    <div class="img-overlay-group">
+      <button class="ov-btn" id="ovZoomOut">－</button>
+      <span class="ov-zoom-label" id="ovZoomLabel">1x</span>
+      <button class="ov-btn" id="ovZoomIn">＋</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot" id="toastDot"></span><span id="toastMsg">Data berhasil disalin</span></div>
+
+<script src="app.js"></script>
+</body>
+</html>
