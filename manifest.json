@@ -1,0 +1,27 @@
+{
+  "id": "./",
+  "name": "StockxHarga Sparepart",
+  "short_name": "Sparepart",
+  "description": "Cari sparepart, kode, stok, dan harga — Layanan Purna Jual",
+  "lang": "id",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#d6d6d6",
+  "theme_color": "#1f1f1f",
+  "icons": [
+    {
+      "src": "assets/Sparepart%20192%20light.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/Sparepart%20512%20light.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
