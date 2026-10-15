@@ -1,3 +1,8 @@
+let allData = [];
+let dataLoaded = false;
+let dataError = null;
+let lastQueryTokens = [];
+
 /* ============ LOAD DATA DARI SERVER (Apps Script API) ============ */
 const API_URL = 'https://script.google.com/macros/s/AKfycbxKnu5rQldB9OjgmS39LfoS9lvitv_xNaEUiD1BhLBCn6eJH3y1IHpsdUWey0RaIbS_yQ/exec';
 const CACHE_KEY = 'sparepart_data_v1';
