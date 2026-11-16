@@ -405,6 +405,15 @@
     background:rgba(81,112,255,.12); color:var(--blue-dark);
     padding:2px 9px; border-radius:10px; vertical-align:middle;
   }
+  /* pemisah antar kelompok di Stock GBMP: jarak lebih lega + garis lebih tebal */
+  .gbmp-card .group-row td{
+    padding-top:32px;
+    border-top:3px solid var(--divider-strong);
+  }
+  .gbmp-card tbody tr.group-row:first-child td{
+    padding-top:14px;
+    border-top:none;
+  }
 
   /* ============ FOOTER ============ */
   footer.site-footer{
