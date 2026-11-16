@@ -246,7 +246,7 @@ function renderGbmp(tokens){
 
   if (!gbmpLoaded) {
     countEl.textContent = '';
-    tbody.innerHTML = `<tr class="no-data-row"><td colspan="5">${
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="4">${
       gbmpError ? 'Gagal memuat data GBMP: ' + escapeHtml(gbmpError)
                 : '<span class="loading-spin"></span> Memuat data GBMP...'}</td></tr>`;
     return;
@@ -255,7 +255,7 @@ function renderGbmp(tokens){
   const results = filterGbmp(tokens);
   countEl.textContent = results.length + ' hasil';
   if (results.length === 0) {
-    tbody.innerHTML = `<tr class="no-data-row"><td colspan="5">Tidak ada hasil di Import GBMP</td></tr>`;
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="4">Tidak ada hasil di Stock GBMP</td></tr>`;
     return;
   }
 
@@ -277,7 +277,7 @@ function renderGbmp(tokens){
   for (const g of names) {
     if (shown >= GBMP_MAX_ROWS) break;
     const items = groups.get(g).sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
-    html += `<tr class="group-row"><td colspan="5">${escapeHtml(g)}<span class="grp-count">${items.length}</span></td></tr>`;
+    html += `<tr class="group-row"><td colspan="4">${escapeHtml(g)}<span class="grp-count">${items.length}</span></td></tr>`;
     for (const it of items) {
       if (shown >= GBMP_MAX_ROWS) break;
       html += `
@@ -286,13 +286,12 @@ function renderGbmp(tokens){
           <td data-label="Nama Barang"><strong>${highlightTokens(it.nama || '-', tokens)}</strong></td>
           <td data-label="Produk">${escapeHtml(it.produk || '-')}</td>
           <td data-label="Stok Fisik"><span class="stock-pill">${escapeHtml(it.stok === '' || it.stok == null ? '0' : it.stok)}</span></td>
-          <td data-label="Dipinjam">${escapeHtml(it.dipinjam === '' || it.dipinjam == null ? '0' : it.dipinjam)}</td>
         </tr>`;
       shown++;
     }
   }
   if (shown < results.length) {
-    html += `<tr class="no-data-row"><td colspan="5">Menampilkan ${shown} dari ${results.length} hasil — persempit dengan kata kunci tambahan</td></tr>`;
+    html += `<tr class="no-data-row"><td colspan="4">Menampilkan ${shown} dari ${results.length} hasil — persempit dengan kata kunci tambahan</td></tr>`;
   }
   tbody.innerHTML = html;
 }
