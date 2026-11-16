@@ -387,6 +387,25 @@
   .empty-illust{ display:flex; flex-direction:column; align-items:center; gap:14px; }
   .empty-illust img{ width:180px; max-width:60vw; border-radius:18px; }
 
+  /* ============ KARTU IMPORT GBMP ============ */
+  .gbmp-card{ margin-top:-40px; }
+  .gbmp-head{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:18px 18px 10px;
+  }
+  .gbmp-head h2{
+    font-family:var(--font-display); font-size:1.1rem; font-weight:700; color:var(--ink-strong);
+  }
+  .gbmp-count{
+    background:var(--ink-strong); color:#fff; font-size:.78rem;
+    padding:4px 12px; border-radius:20px;
+  }
+  .grp-count{
+    margin-left:8px; font-family:var(--font-body); font-size:.72rem; font-weight:500;
+    background:rgba(81,112,255,.12); color:var(--blue-dark);
+    padding:2px 9px; border-radius:10px; vertical-align:middle;
+  }
+
   /* ============ FOOTER ============ */
   footer.site-footer{
     text-align:center;
