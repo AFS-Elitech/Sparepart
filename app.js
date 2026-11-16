@@ -12,6 +12,8 @@ let gbmpData = [];
 let gbmpLoaded = false;
 let gbmpError = null;
 let gbmpRawJson = '';
+let gbmpRendered = [];
+const STICKER_HABIS_URL = 'assets/sticker-stok-habis.png';
 const GBMP_MAX_ROWS = 300;
 const GBMP_TANPA_GRUP = 'Tanpa Converter';
 
@@ -243,10 +245,11 @@ function renderGbmp(tokens){
   const tbody = document.getElementById('tableBodyGbmp');
   const countEl = document.getElementById('gbmpCount');
   card.style.display = 'block';
+  gbmpRendered = [];
 
   if (!gbmpLoaded) {
     countEl.textContent = '';
-    tbody.innerHTML = `<tr class="no-data-row"><td colspan="4">${
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="5">${
       gbmpError ? 'Gagal memuat data GBMP: ' + escapeHtml(gbmpError)
                 : '<span class="loading-spin"></span> Memuat data GBMP...'}</td></tr>`;
     return;
@@ -255,7 +258,7 @@ function renderGbmp(tokens){
   const results = filterGbmp(tokens);
   countEl.textContent = results.length + ' hasil';
   if (results.length === 0) {
-    tbody.innerHTML = `<tr class="no-data-row"><td colspan="4">Tidak ada hasil di Stock GBMP</td></tr>`;
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="5">Tidak ada hasil di Stock GBMP</td></tr>`;
     return;
   }
 
@@ -273,25 +276,30 @@ function renderGbmp(tokens){
   });
 
   let html = '';
-  let shown = 0;
   for (const g of names) {
-    if (shown >= GBMP_MAX_ROWS) break;
+    if (gbmpRendered.length >= GBMP_MAX_ROWS) break;
     const items = groups.get(g).sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
-    html += `<tr class="group-row"><td colspan="4">${escapeHtml(g)}<span class="grp-count">${items.length}</span></td></tr>`;
+    html += `<tr class="group-row"><td colspan="5">${escapeHtml(g)}<span class="grp-count">${items.length}</span></td></tr>`;
     for (const it of items) {
-      if (shown >= GBMP_MAX_ROWS) break;
+      if (gbmpRendered.length >= GBMP_MAX_ROWS) break;
+      const idx = gbmpRendered.length;
+      gbmpRendered.push(it);
+      const habis = !(parseFloat(it.stok) > 0);
+      const tombol = habis
+        ? `<button class="btn btn-foto" onclick="copyGbmp(this, ${idx})">Salin Sticker</button>`
+        : `<button class="btn btn-data" onclick="copyGbmp(this, ${idx})">Salin Data</button>`;
       html += `
         <tr class="item-row">
           <td data-label="Kode"><span class="kode-badge">${highlightTokens(it.kode || '-', tokens)}</span></td>
           <td data-label="Nama Barang"><strong>${highlightTokens(it.nama || '-', tokens)}</strong></td>
           <td data-label="Produk">${escapeHtml(it.produk || '-')}</td>
           <td data-label="Stok Fisik"><span class="stock-pill">${escapeHtml(it.stok === '' || it.stok == null ? '0' : it.stok)}</span></td>
+          <td data-label="Aksi" class="td-aksi"><div class="aksi">${tombol}</div></td>
         </tr>`;
-      shown++;
     }
   }
-  if (shown < results.length) {
-    html += `<tr class="no-data-row"><td colspan="4">Menampilkan ${shown} dari ${results.length} hasil — persempit dengan kata kunci tambahan</td></tr>`;
+  if (gbmpRendered.length < results.length) {
+    html += `<tr class="no-data-row"><td colspan="5">Menampilkan ${gbmpRendered.length} dari ${results.length} hasil — persempit dengan kata kunci tambahan</td></tr>`;
   }
   tbody.innerHTML = html;
 }
@@ -547,6 +555,59 @@ function copyFoto(kode, remarks, btnEl){
       showToast('Gagal mengambil gambar dari server', 'error');
       reset();
     });
+}
+
+function copyGbmp(btn, idx){
+  const it = gbmpRendered[idx];
+  if (!it) return;
+
+  // stok 0 / kosong -> kirim sticker
+  if (!(parseFloat(it.stok) > 0)) { copyStickerHabis(btn); return; }
+
+  const textToCopy = `Detail sparepart:
+> Produk : ${it.produk || '-'}
+> Sparepart : ${it.nama || '-'}
+> Kode : ${it.kode || '-'}
+> Stok : ${it.stok}`;
+
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    showToast('Data berhasil disalin ke clipboard!');
+    flashCopied(btn);
+  }).catch(err => {
+    console.error('Failed to copy:', err);
+    showToast('Gagal menyalin data', 'error');
+  });
+}
+
+function copyStickerHabis(btn){
+  const originalText = btn.innerHTML;
+  btn.innerHTML = 'Memuat...';
+  btn.disabled = true;
+  function reset(){ btn.innerHTML = originalText; btn.disabled = false; }
+
+  const img = new Image();
+  img.onload = function(){
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    canvas.getContext('2d').drawImage(img, 0, 0);
+    canvas.toBlob(function(pngBlob){
+      navigator.clipboard.write([new ClipboardItem({ 'image/png': pngBlob })])
+        .then(() => {
+          showToast('Sticker berhasil disalin!');
+          flashCopied(btn, originalText);
+        })
+        .catch(err => {
+          showToast('Browser tidak mendukung salin gambar: ' + err.message, 'error');
+          reset();
+        });
+    }, 'image/png');
+  };
+  img.onerror = function(){
+    showToast('File sticker tidak ditemukan: ' + STICKER_HABIS_URL, 'error');
+    reset();
+  };
+  img.src = STICKER_HABIS_URL;
 }
 
 function flashCopied(btn, restoreText){
