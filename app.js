@@ -8,6 +8,12 @@ let allData = [];
 let dataLoaded = false;
 let dataError = null;
 let lastQueryTokens = [];
+let gbmpData = [];
+let gbmpLoaded = false;
+let gbmpError = null;
+let gbmpRawJson = '';
+const GBMP_MAX_ROWS = 300;
+const GBMP_TANPA_GRUP = 'Tanpa Converter';
 
 /* ============ HELPERS ============ */
 function tokenize(query){
@@ -156,6 +162,141 @@ function onLoadFailure(err){
     .catch(onLoadFailure);
 })();
 
+const CACHE_KEY_GBMP = 'sparepart_gbmp_v1';
+
+function readCacheGbmp(){
+  try {
+    const raw = localStorage.getItem(CACHE_KEY_GBMP);
+    if (!raw) return null;
+    const obj = JSON.parse(raw);
+    return obj && Array.isArray(obj.data) ? obj.data : null;
+  } catch (e) { return null; }
+}
+function writeCacheGbmp(rows){
+  try { localStorage.setItem(CACHE_KEY_GBMP, JSON.stringify({ ts: Date.now(), data: rows })); }
+  catch (e) { /* storage penuh/diblokir: abaikan */ }
+}
+
+// Rapikan converter: spasi ganda dibuang; kosong / #N/A / error => '' (masuk "Tanpa Converter")
+function prepGbmp(rows){
+  return rows.map(r => {
+    let c = String(r.c || '').replace(/\s+/g, ' ').trim();
+    if (!c || c.charAt(0) === '#' || c.toLowerCase() === 'none') c = '';
+    return {
+      kode: r.k, produk: r.p, nama: r.n, stok: r.s, dipinjam: r.d, conv: c,
+      _h: `${r.n || ''} ${r.p || ''} ${r.k || ''} ${c}`.toLowerCase()
+    };
+  });
+}
+
+function initGbmp(rows){
+  const json = JSON.stringify(rows);
+  if (gbmpLoaded && json === gbmpRawJson) return; // sama persis, tidak perlu render ulang
+  gbmpRawJson = json;
+  gbmpData = prepGbmp(rows);
+  gbmpLoaded = true;
+  gbmpError = null;
+  console.log('GBMP loaded:', gbmpData.length, 'items');
+  if (document.body.classList.contains('app-active')) {
+    const q = document.getElementById('heroInput').value.trim();
+    if (q) runSearch(q);
+  }
+}
+
+function onGbmpFailure(err){
+  const pesan = err && err.message ? err.message : 'Gagal memuat data GBMP';
+  if (gbmpLoaded) { console.warn('Refresh GBMP gagal, memakai data tersimpan:', pesan); return; }
+  gbmpError = pesan;
+  console.error('GBMP error:', pesan);
+  if (document.body.classList.contains('app-active')) {
+    const q = document.getElementById('heroInput').value.trim();
+    if (q) runSearch(q);
+  }
+}
+
+(function loadGbmp(){
+  const cached = readCacheGbmp();
+  if (cached) initGbmp(cached);
+  callApi({ action: 'gbmp' })
+    .then(function(data){
+      if (!Array.isArray(data)) throw new Error(data && data.error ? data.error : 'Format data GBMP tidak valid');
+      writeCacheGbmp(data);
+      initGbmp(data);
+    })
+    .catch(onGbmpFailure);
+})();
+
+// Aturan sama dgn StockxHarga: SEMUA token harus cocok (persis, atau fuzzy tanpa peduli spasi/strip)
+function filterGbmp(tokens){
+  if (!tokens.length) return [];
+  const checks = tokens.map(t => ({ t: t, re: buildFuzzyRegex(t) })); // regex dibuat sekali, bukan per baris
+  return gbmpData.filter(it => checks.every(c => it._h.includes(c.t) || (c.re && c.re.test(it._h))));
+}
+
+function hideGbmp(){
+  const card = document.getElementById('cardGbmp');
+  if (card) card.style.display = 'none';
+}
+
+function renderGbmp(tokens){
+  const card = document.getElementById('cardGbmp');
+  const tbody = document.getElementById('tableBodyGbmp');
+  const countEl = document.getElementById('gbmpCount');
+  card.style.display = 'block';
+
+  if (!gbmpLoaded) {
+    countEl.textContent = '';
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="5">${
+      gbmpError ? 'Gagal memuat data GBMP: ' + escapeHtml(gbmpError)
+                : '<span class="loading-spin"></span> Memuat data GBMP...'}</td></tr>`;
+    return;
+  }
+
+  const results = filterGbmp(tokens);
+  countEl.textContent = results.length + ' hasil';
+  if (results.length === 0) {
+    tbody.innerHTML = `<tr class="no-data-row"><td colspan="5">Tidak ada hasil di Import GBMP</td></tr>`;
+    return;
+  }
+
+  // kelompokkan per kolom G (converter)
+  const groups = new Map();
+  results.forEach(it => {
+    const g = it.conv || GBMP_TANPA_GRUP;
+    if (!groups.has(g)) groups.set(g, []);
+    groups.get(g).push(it);
+  });
+  const names = Array.from(groups.keys()).sort((a, b) => {
+    if (a === GBMP_TANPA_GRUP) return 1;
+    if (b === GBMP_TANPA_GRUP) return -1;
+    return a.localeCompare(b);
+  });
+
+  let html = '';
+  let shown = 0;
+  for (const g of names) {
+    if (shown >= GBMP_MAX_ROWS) break;
+    const items = groups.get(g).sort((a, b) => (a.nama || '').localeCompare(b.nama || ''));
+    html += `<tr class="group-row"><td colspan="5">${escapeHtml(g)}<span class="grp-count">${items.length}</span></td></tr>`;
+    for (const it of items) {
+      if (shown >= GBMP_MAX_ROWS) break;
+      html += `
+        <tr class="item-row">
+          <td data-label="Kode"><span class="kode-badge">${highlightTokens(it.kode || '-', tokens)}</span></td>
+          <td data-label="Nama Barang"><strong>${highlightTokens(it.nama || '-', tokens)}</strong></td>
+          <td data-label="Produk">${escapeHtml(it.produk || '-')}</td>
+          <td data-label="Stok Fisik"><span class="stock-pill">${escapeHtml(it.stok === '' || it.stok == null ? '0' : it.stok)}</span></td>
+          <td data-label="Dipinjam">${escapeHtml(it.dipinjam === '' || it.dipinjam == null ? '0' : it.dipinjam)}</td>
+        </tr>`;
+      shown++;
+    }
+  }
+  if (shown < results.length) {
+    html += `<tr class="no-data-row"><td colspan="5">Menampilkan ${shown} dari ${results.length} hasil — persempit dengan kata kunci tambahan</td></tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
 /* ============ FILTER / SEARCH ============ */
 function filterData(query){
   const tokens = tokenize(query);
@@ -177,6 +318,7 @@ function runSearch(query){
   const results = filterData(query).slice().sort((a, b) => (a.produk || '').localeCompare(b.produk || ''));
   renderTable(results);
   showStats(results.length);
+  renderGbmp(tokens);
   return results;
 }
 
@@ -200,6 +342,7 @@ function renderLoadingRow(){
 }
 function showPromptState(){
   hideStats();
+  hideGbmp();
   document.getElementById('tableBody').innerHTML = `
     <tr class="no-data-row">
       <td colspan="7">
@@ -508,6 +651,7 @@ function activateApp(){
 function goIdle(){
   if (!body.classList.contains('app-active')) { showTooltip(); return; }
   hideStats();
+  hideGbmp();
   const reversed = Array.from(revealEls).reverse();
   reversed.forEach((el, i) => {
     setTimeout(() => {
