@@ -79,16 +79,18 @@ function buildRemarksHtml(remarks){
   if (!remarks) return '';
   const paras = String(remarks).split(/\r?\n/).map(s => s.trim()).filter(Boolean);
   if (paras.length === 0) return '';
-  if (paras.length <= 2) {
-    return `<span class="remarks">${paras.map(escapeHtml).join('<br>')}</span>`;
-  }
-  const head = paras.slice(0, 2).map(escapeHtml).join('<br>');
-  const rest = paras.slice(2).map(escapeHtml).join('<br>');
-  return `<span class="remarks remarks-collapsible">` +
-    `<span class="remarks-head">${head}</span>` +
-    `<span class="remarks-rest">${rest}</span>` +
+  return `<span class="remarks">` +
+    `<span class="remarks-text">${paras.map(escapeHtml).join('<br>')}</span>` +
     `<button type="button" class="remarks-toggle" aria-expanded="false" onclick="toggleRemarks(this)">more</button>` +
     `</span>`;
+}
+
+function markRemarksOverflow(root){
+  (root || document).querySelectorAll('.remarks:not(.open)').forEach(el => {
+    const t = el.querySelector('.remarks-text');
+    if (!t) return;
+    el.classList.toggle('has-more', t.scrollHeight > t.clientHeight + 1);
+  });
 }
 
 function toggleRemarks(btn){
@@ -458,6 +460,7 @@ function renderTable(items){
   });
 
   tbody.innerHTML = html;
+  markRemarksOverflow(tbody);
 }
 
 /* ============ SUGGESTIONS ============ */
@@ -900,6 +903,16 @@ function resetIdleTimer(){
   document.addEventListener(evt, resetIdleTimer, { passive: true });
 });
 resetIdleTimer();
+
+/* ============ REMARKS: hitung ulang saat layar/font berubah ============ */
+let remarksResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(remarksResizeTimer);
+  remarksResizeTimer = setTimeout(() => markRemarksOverflow(document), 150);
+});
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => markRemarksOverflow(document));
+}
 
 /* ============ PWA: SERVICE WORKER ============ */
 if ('serviceWorker' in navigator) {
