@@ -73,9 +73,47 @@ function escapeHtml(s){
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
-function escapeJs(s){
-  return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+
+// Remarks: paragraf = baris yang dipisah enter. Lebih dari 2 paragraf -> tampil 2 dulu + tombol "more".
+function buildRemarksHtml(remarks){
+  if (!remarks) return '';
+  const paras = String(remarks).split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+  if (paras.length === 0) return '';
+  if (paras.length <= 2) {
+    return `<span class="remarks">${paras.map(escapeHtml).join('<br>')}</span>`;
+  }
+  const head = paras.slice(0, 2).map(escapeHtml).join('<br>');
+  const rest = paras.slice(2).map(escapeHtml).join('<br>');
+  return `<span class="remarks remarks-collapsible">` +
+    `<span class="remarks-head">${head}</span>` +
+    `<span class="remarks-rest">${rest}</span>` +
+    `<button type="button" class="remarks-toggle" aria-expanded="false" onclick="toggleRemarks(this)">more</button>` +
+    `</span>`;
 }
+
+function toggleRemarks(btn){
+  const wrap = btn.closest('.remarks');
+  if (!wrap) return;
+  const open = wrap.classList.toggle('open');
+  btn.textContent = open ? 'less' : 'more';
+  btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+}
+
+// Aman dipakai di dalam onclick="...'${escapeJs(x)}'..." (kutip, enter, backslash, dan karakter HTML).
+function escapeJs(s){
+  return String(s == null ? '' : s)
+    .replace(/\\/g, '\\\\')
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, '')
+    .replace(/\n/g, '\\n')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029')
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
 function formatRupiah(angka){
   if (angka === undefined || angka === null) return 'Rp 0';
   let number = typeof angka === 'string' ? parseFloat(angka) : angka;
@@ -392,21 +430,21 @@ function renderTable(items){
 
     const color = PALETTE[Math.abs(hashCode(item.produk || '')) % PALETTE.length];
     const kodeDisplay = item.kode && item.kode !== '-' ? item.kode : '-';
-    const remarksHtml = item.remarks ? `<span class="remarks">${escapeHtml(item.remarks)}</span>` : '';
+    const remarksHtml = buildRemarksHtml(item.remarks);
 
     const fotoHtml = item.gambarUrl
-      ? `<img src="${item.gambarUrl}" class="foto-thumb" alt="${escapeHtml(item.part || 'produk')}" loading="lazy" onclick="showFotoPreview('${escapeJs(item.gambarUrl)}')">`
+      ? `<img src="${escapeHtml(item.gambarUrl)}" class="foto-thumb" alt="${escapeHtml(item.part || 'produk')}" loading="lazy" onclick="showFotoPreview('${escapeJs(item.gambarUrl)}')">`
       : `<div class="thumb" style="background:${color}">${initials(item.produk)}</div>`;
 
     const tombolFoto = item.gambarUrl
-      ? `<button class="btn btn-foto" onclick="copyFoto('${escapeJs(item.kode)}','${escapeJs(item.remarks)}', this)">Salin Foto</button>`
+      ? `<button class="btn btn-foto" onclick="copyFoto('${escapeJs(item.kode)}','${escapeJs(item.remarks)}','${escapeJs(item.produk)}','${escapeJs(item.part)}', this)">Salin Foto</button>`
       : '';
 
     html += `
       <tr class="item-row">
         <td data-label="Foto">${fotoHtml}</td>
         <td data-label="Produk"><strong>${escapeHtml(item.produk || '-')}</strong></td>
-        <td data-label="Kode"><span class="kode-badge">${escapeHtml(kodeDisplay)}</span>${remarksHtml}</td>
+        <td data-label="Kode"><div class="kode-cell"><span class="kode-badge">${escapeHtml(kodeDisplay)}</span>${remarksHtml}</div></td>
         <td data-label="Part">${escapeHtml(item.part || '-')}</td>
         <td data-label="Stok"><span class="stock-pill">${escapeHtml(item.stock || '0')}</span></td>
         <td data-label="Harga"><span class="harga">${formatRupiah(item.harga)}</span></td>
@@ -499,7 +537,7 @@ Harga sudah PPN, belum disc`;
   });
 }
 
-function copyFoto(kode, remarks, btnEl){
+function copyFoto(kode, remarks, produk, part, btnEl){
   const originalText = btnEl.innerHTML;
   btnEl.innerHTML = 'Memuat...';
   btnEl.disabled = true;
@@ -509,7 +547,7 @@ function copyFoto(kode, remarks, btnEl){
     btnEl.disabled = false;
   }
 
-  callApi({ action: 'gambar', kode: kode, remarks: remarks })
+  callApi({ action: 'gambar', kode: kode, remarks: remarks, produk: produk, part: part })
     .then(function(res){
       if (!res || res.error) {
         showToast(res && res.error ? res.error : 'Gagal mengambil gambar', 'error');
