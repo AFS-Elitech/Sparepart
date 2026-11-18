@@ -351,15 +351,26 @@
   }
   .kode-cell{ min-width:0; }
   .remarks{ display:block; margin-top:4px; font-size:.76rem; color:var(--ink-soft); font-style:italic; line-height:1.45; }
-  .remarks-head{ display:block; }
-  .remarks-rest{ display:none; }
-  .remarks.open .remarks-rest{ display:block; }
+  .remarks-text{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    line-clamp:2;
+    overflow:hidden;
+  }
+  .remarks.open .remarks-text{
+    display:block;
+    -webkit-line-clamp:unset;
+    line-clamp:unset;
+    overflow:visible;
+  }
   .remarks-toggle{
-    display:inline-block; margin-top:3px; padding:0;
+    display:none; margin-top:3px; padding:0;
     border:none; background:none; cursor:pointer;
     font-family:var(--font-body); font-size:.76rem; font-weight:600; font-style:normal;
     color:var(--blue-dark);
   }
+  .remarks.has-more .remarks-toggle{ display:inline-block; }
   .remarks-toggle:hover{ text-decoration:underline; }
   .remarks-toggle::after{ content:' ▾'; }
   .remarks.open .remarks-toggle::after{ content:' ▴'; }
