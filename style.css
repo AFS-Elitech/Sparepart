@@ -349,15 +349,20 @@
     font-size:.82rem;
     display:inline-block;
   }
-  .remarks{ display:block; margin-top:4px; font-size:.76rem; color:var(--ink-soft); font-style:italic; }
-  .stock-pill{
-    background:rgba(81,112,255,.1);
+  .kode-cell{ min-width:0; }
+  .remarks{ display:block; margin-top:4px; font-size:.76rem; color:var(--ink-soft); font-style:italic; line-height:1.45; }
+  .remarks-head{ display:block; }
+  .remarks-rest{ display:none; }
+  .remarks.open .remarks-rest{ display:block; }
+  .remarks-toggle{
+    display:inline-block; margin-top:3px; padding:0;
+    border:none; background:none; cursor:pointer;
+    font-family:var(--font-body); font-size:.76rem; font-weight:600; font-style:normal;
     color:var(--blue-dark);
-    font-weight:600;
-    padding:4px 10px;
-    border-radius:8px;
-    font-size:.85rem;
   }
+  .remarks-toggle:hover{ text-decoration:underline; }
+  .remarks-toggle::after{ content:' ▾'; }
+  .remarks.open .remarks-toggle::after{ content:' ▴'; }
   .harga{ font-weight:700; color:var(--ink-strong); }
   .aksi{ display:flex; gap:8px; flex-wrap:wrap; }
   .btn{
